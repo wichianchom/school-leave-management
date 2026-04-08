@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="th" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบให้คะแนนแผนการจัดการเรียนรู้ - Admin</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { heading: ['Kanit', 'sans-serif'], body: ['Kanit', 'sans-serif'] } } } }
+  </script>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    * { font-family: 'Kanit', sans-serif; }
+    h1,h2,h3,h4,h5,h6,.font-heading { font-family: 'Kanit', sans-serif; }
+    
+    /* ปรับเป็นโทนสว่างทั้งหมด */
+    .app-bg { background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, #f1f5f9 100%); color: #1f2937; } 
+    .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(200,200,200,0.3); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    
+    .score-btn { transition: all 0.15s ease; }
+    .score-btn:hover { transform: scale(1.1); }
+    .score-btn.selected { transform: scale(1.15); box-shadow: 0 0 15px rgba(59,130,246,0.4); color: white !important; border: none; }
+    .fade-in { animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .toast-msg { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; padding: 12px 24px; border-radius: 12px; background: linear-gradient(135deg, #10b981, #059669); color: white; font-weight: 600; box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s; }
+    @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(-20px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+    @keyframes toastOut { from{opacity:1} to{opacity:0} }
+    input[type="text"], input[type="password"], select, textarea { font-size: 16px !important; color: #1f2937; }
+    @media print { .no-print { display: none !important; } .print-only { display: block !important; } body { background: white !important; color: black; } }
+  </style>
+ </head>
+ <body class="h-full app-bg overflow-auto">
+  <div id="app" class="w-full h-full flex flex-col">
+   <nav class="no-print sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-3">
+     <div class="flex items-center justify-between h-14">
+      <div class="flex items-center gap-2">
+       <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center">
+        <i data-lucide="shield" class="w-4 h-4 text-white"></i>
+       </div><span class="font-heading font-bold text-sm text-gray-800">Admin Management</span>
+      </div>
+      <a href="index.html" class="text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1 transition-colors"><i data-lucide="home" class="w-4 h-4"></i> กลับหน้าหลัก</a>
+     </div>
+    </div>
+   </nav>
+
+   <div class="flex-1 overflow-auto mt-6">
+    <div id="page-admin" class="page fade-in max-w-md mx-auto p-4 sm:p-6">
+     <div class="glass-card rounded-3xl p-8">
+      <div class="text-center mb-6">
+       <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center mb-3 shadow-lg shadow-red-500/30">
+        <i data-lucide="shield-check" class="w-8 h-8 text-white"></i>
+       </div>
+       <h1 class="font-heading text-2xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">Admin Login</h1>
+      </div>
+      <form id="loginForm" class="space-y-4">
+       <div><label for="adminUser" class="block text-sm font-medium text-gray-700 mb-1">Username</label> <input type="text" id="adminUser" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-red-500 outline-none transition-all" placeholder="Username"></div>
+       <div><label for="adminPass" class="block text-sm font-medium text-gray-700 mb-1">Password</label> <input type="password" id="adminPass" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-red-500 outline-none transition-all" placeholder="Password"></div>
+       <div id="loginError" class="hidden text-red-500 text-sm text-center font-medium"></div>
+       <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 font-heading font-bold text-lg text-white transition-all shadow-md hover:shadow-lg hover:shadow-red-500/30 mt-2">เข้าสู่ระบบ</button>
+      </form>
+     </div>
+    </div>
+
+    <div id="page-admin-dash" class="page hidden fade-in max-w-7xl mx-auto p-4 sm:p-6">
+     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <h1 class="font-heading text-2xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">รายการแผนการสอนทั้งหมด</h1>
+      <div class="flex gap-2">
+       <button onclick="exportPDF()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-sm font-bold text-white flex items-center gap-1 transition-all shadow-sm"><i data-lucide="download" class="w-4 h-4"></i> PDF</button>
+       <button onclick="adminLogout()" class="px-4 py-2 rounded-xl bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-bold flex items-center gap-1 transition-all shadow-sm"><i data-lucide="log-out" class="w-4 h-4"></i> ออก</button>
+      </div>
+     </div>
+     <div id="adminContent" class="glass-card rounded-2xl p-6"></div>
+    </div>
+
+    <div id="scoringModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+     <div class="bg-white border border-gray-200 rounded-3xl w-full max-w-3xl max-h-[90%] overflow-auto p-6 md:p-8 shadow-2xl">
+      <div id="scoringModalContent"></div>
+     </div>
+    </div>
+
+    <div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+     <div class="bg-white border border-red-100 rounded-3xl w-full max-w-sm p-8 text-center shadow-2xl">
+      <div class="w-16 h-16 mx-auto rounded-full bg-red-100 flex items-center justify-center mb-5"><i data-lucide="trash-2" class="w-8 h-8 text-red-600"></i></div>
+      <h3 class="font-heading text-xl font-bold text-gray-800 mb-2">ยืนยันการลบ</h3>
+      <p class="text-gray-500 text-sm mb-8">คุณต้องการลบข้อมูลแผนการสอนนี้ใช่หรือไม่? <br>การกระทำนี้ไม่สามารถกู้คืนได้</p>
+      <div class="flex gap-3">
+       <button onclick="closeDeleteModal()" class="flex-1 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition-all">ยกเลิก</button>
+       <button id="confirmDeleteBtn" class="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold transition-all shadow-md hover:shadow-lg hover:shadow-red-500/30">ลบข้อมูล</button>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+
+  <script>
+let allRecords = [];
+let currentScoringRecord = null;
+let scoringStep = 1;
+let tempScores = {};
+let deleteTargetRecord = null;
+
+const CRITERIA = [
+  "วิเคราะห์หลักสูตรได้ครบถ้วนตามมาตรฐาน/ตัวชี้วัด/ผลการเรียนรู้และสอดคล้องตามหลักสูตรสถานศึกษา",
+  "มาตรฐานการเรียนรู้/ตัวชี้วัด/ผลการเรียนรู้/สมรรถนะสำคัญของผู้เรียนและคุณลักษณะอันพึงประสงค์มีความเชื่อมโยงกันอย่างเหมาะสม",
+  "ความสอดคล้องของสาระสำคัญกับมาตรฐานการเรียนรู้/ตัวชี้วัด/ผลการเรียนรู้",
+  "ความสอดคล้องของสาระสำคัญกับสาระการเรียนรู้",
+  "มีการกำหนดเป้าหมายที่ต้องการให้เกิดขึ้นกับผู้เรียนครอบคลุมทั้งด้านความรู้ (K) ทักษะกระบวนการ (P) คุณลักษณะอันพึงประสงค์ (A) สมรรถนะสำคัญของผู้เรียน (C) และความสามารถและทักษะของผู้เรียนในศตวรรษที่ 21",
+  "กิจกรรมการเรียนรู้สอดคล้องกับมาตรฐานการเรียนรู้/ตัวชี้วัด/ผลการเรียนรู้ และสาระการเรียนรู้",
+  "กิจกรรมการเรียนรู้มีความครอบคลุมในการพัฒนาด้านความรู้ (K) ทักษะกระบวนการ (P) คุณลักษณะอันพึงประสงค์ (A) สมรรถนะสำคัญของผู้เรียน (C) และความสามารถและทักษะของผู้เรียนในศตวรรษที่ 21",
+  "กิจกรรมการเรียนรู้มีความเหมาะสมสามารถนำผู้เรียนไปสู่การสร้างชิ้นงาน/ภาระงาน/นวัตกรรม",
+  "สื่อ/นวัตกรรม/แหล่งเรียนรู้ในแต่ละกิจกรรม มีความเหมาะสมกับเวลาและการนำไปประยุกต์ใช้ได้จริง",
+  "มีการประเมินผลตามสภาพจริงและสอดคล้องกับมาตรฐานการเรียนรู้/ตัวชี้วัด/กิจกรรมการเรียนรู้และครอบคลุมทั้งด้านความรู้ (K) ทักษะกระบวนการ (P) คุณลักษณะอันพึงประสงค์ (A) สมรรถนะสำคัญของผู้เรียน (C) และความสามารถและทักษะของผู้เรียนในศตวรรษที่ 21 และเหมาะสมกับธรรมชาติของรายวิชา"
+];
+
+// ============ INIT GOOGLE SHEETS API ============
+// อย่าลืมเอา URL จากฝั่ง index มาใส่ที่นี่ด้วยนะครับ!
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzlgdnyW2g70MHA3H47KQ7xyXAQb9X3vLLvTLsPH32w3AccEtNUcT8jtP0cj_DD850T9A/exec"; 
+
+window.dataSdk = {
+  async init({ onDataChanged }) {
+    this.onDataChanged = onDataChanged;
+    await this.fetchData();
+    return { isOk: true };
+  },
+  async fetchData() {
+    try {
+      const response = await fetch(SCRIPT_URL);
+      const data = await response.json();
+      allRecords = data || [];
+      if (this.onDataChanged) this.onDataChanged(allRecords);
+    } catch (error) { console.error("Error:", error); }
+  },
+  async update(record) {
+    try {
+      const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "update", record: record }) });
+      const result = await response.json();
+      if (result.isOk) await this.fetchData();
+      return result;
+    } catch (e) { return { isOk: false }; }
+  },
+  async delete(record) {
+    try {
+      const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "delete", record: record }) });
+      const result = await response.json();
+      if (result.isOk) await this.fetchData();
+      return result;
+    } catch (e) { return { isOk: false }; }
+  }
+};
+
+(async () => {
+  const res = await window.dataSdk.init({
+    onDataChanged(data) {
+      allRecords = data || [];
+      if(!document.getElementById('page-admin-dash').classList.contains('hidden')) renderAdmin();
+    }
+  });
+})();
+
+function showToast(msg, color) {
+  const t = document.createElement('div'); t.className = 'toast-msg'; if(color) t.style.background = color;
+  t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+}
+
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const u = document.getElementById('adminUser').value; const p = document.getElementById('adminPass').value;
+  if(u === 'WCC' && p === 'WCC1234') {
+    document.getElementById('page-admin').classList.add('hidden');
+    document.getElementById('page-admin-dash').classList.remove('hidden');
+    renderAdmin();
+  } else {
+    const err = document.getElementById('loginError'); err.classList.remove('hidden'); err.textContent = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+  }
+});
+
+function adminLogout() {
+  document.getElementById('adminUser').value = ''; document.getElementById('adminPass').value = '';
+  document.getElementById('page-admin-dash').classList.add('hidden');
+  document.getElementById('page-admin').classList.remove('hidden');
+}
+
+function renderAdmin() {
+  const plans = allRecords.filter(r => r.type === 'plan');
+  const container = document.getElementById('adminContent');
+  if(!plans.length) { container.innerHTML = '<div class="p-8 text-center text-gray-400"><p>ยังไม่มีข้อมูลการส่งแผน</p></div>'; return; }
+
+  let html = `<div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead><tr class="text-xs text-gray-500 border-b border-gray-200 bg-gray-50/50"><th class="py-3 px-3 text-left rounded-tl-xl">#</th><th class="py-3 px-3 text-left">ชื่อ-นามสกุล</th><th class="py-3 px-3 text-left">กลุ่มชั้น</th><th class="py-3 px-3 text-left">วิชา</th><th class="py-3 px-3 text-center">คะแนน</th><th class="py-3 px-3 text-center">เฉลี่ย 10</th><th class="py-3 px-3 text-center">สถานะ</th><th class="py-3 px-3 text-center rounded-tr-xl">จัดการ</th></tr></thead><tbody>`;
+  plans.forEach((r,i) => {
+    html += `<tr class="border-b border-gray-100 hover:bg-blue-50/50 transition-colors">
+      <td class="py-3 px-3 text-gray-500">${i+1}</td><td class="py-3 px-3 font-medium text-gray-800">${esc(r.name)}</td>
+      <td class="py-3 px-3 text-gray-600">${esc(r.grade)}</td><td class="py-3 px-3 text-gray-600">${esc(r.subject)}</td>
+      <td class="py-3 px-3 text-center font-bold text-gray-700">${r.score_obtained||0}/${r.score_total||50}</td>
+      <td class="py-3 px-3 text-center font-bold text-blue-600">${(r.score_avg10||0).toFixed(2)}</td>
+      <td class="py-3 px-3 text-center"><span class="px-2.5 py-1 rounded-full text-xs font-medium ${r.status==='อนุมัติ'?'bg-emerald-100 text-emerald-700':'bg-amber-100 text-amber-700'}">${r.status}</span></td>
+      <td class="py-3 px-3 text-center"><div class="flex justify-center gap-1.5">
+        <button onclick="openScoring('${r.__backendId}')" class="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 transition-all border border-blue-100" title="ให้คะแนน"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+        <button onclick="openLink('${esc(r.link)}')" class="p-1.5 rounded-lg bg-green-50 hover:bg-green-100 text-green-600 transition-all border border-green-100" title="ดูแผน"><i data-lucide="external-link" class="w-4 h-4"></i></button>
+        <button onclick="openDeleteModal('${r.__backendId}')" class="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-all border border-red-100" title="ลบ"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+      </div></td></tr>`;
+  });
+  html += `</tbody></table></div>`; container.innerHTML = html; lucide.createIcons();
+}
+
+function openLink(url) { if(url) window.open(url, '_blank', 'noopener,noreferrer'); }
+
+function openDeleteModal(id) {
+  deleteTargetRecord = allRecords.find(r => r.__backendId === id); if(!deleteTargetRecord) return;
+  document.getElementById('deleteModal').classList.remove('hidden');
+  document.getElementById('confirmDeleteBtn').onclick = async function() {
+    this.disabled = true; this.textContent = 'กำลังลบ...';
+    const res = await window.dataSdk.delete(deleteTargetRecord);
+    this.disabled = false; this.textContent = 'ลบข้อมูล';
+    closeDeleteModal();
+    if(res.isOk) showToast('ลบข้อมูลเรียบร้อย'); else showToast('เกิดข้อผิดพลาด','linear-gradient(135deg,#ef4444,#dc2626)');
+  };
+}
+function closeDeleteModal() { document.getElementById('deleteModal').classList.add('hidden'); deleteTargetRecord = null; }
+
+function openScoring(id) {
+  currentScoringRecord = allRecords.find(r => r.__backendId === id); if(!currentScoringRecord) return;
+  scoringStep = 1; tempScores = {};
+  for(let i=1;i<=10;i++) tempScores['c'+i] = currentScoringRecord['c'+i] || 0;
+  tempScores.comment = currentScoringRecord.comment || '';
+  renderScoringStep(); document.getElementById('scoringModal').classList.remove('hidden');
+}
+
+function closeScoringModal() { document.getElementById('scoringModal').classList.add('hidden'); currentScoringRecord = null; }
+
+function renderScoringStep() {
+  const r = currentScoringRecord; const c = document.getElementById('scoringModalContent');
+  let totalScore = 0; for(let i=1;i<=10;i++) totalScore += (tempScores['c'+i]||0);
+  const pct = (totalScore/50)*100; const avg10 = pct/10;
+  
+  let html = `<div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+    <div>
+      <h2 class="font-heading font-bold text-xl text-gray-800">ให้คะแนน: ${esc(r.name)}</h2>
+      <p class="text-sm text-gray-500 mt-1">${esc(r.grade)} | ${esc(r.subject)} | ห้อง ${esc(r.classroom)}</p>
+    </div>
+    <button onclick="closeScoringModal()" class="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+  </div>
+  <div class="flex gap-2 mb-6">
+    <div class="flex-1 h-2 rounded-full ${scoringStep>=1?'bg-blue-500':'bg-gray-200'} transition-all"></div>
+    <div class="flex-1 h-2 rounded-full ${scoringStep>=2?'bg-blue-500':'bg-gray-200'} transition-all"></div>
+  </div>`;
+
+  if(scoringStep === 1) {
+    html += `<div class="space-y-4 mb-6">`;
+    CRITERIA.forEach((cr, i) => {
+      const key = 'c'+(i+1); const val = tempScores[key] || 0;
+      html += `<div class="bg-gray-50 border border-gray-100 rounded-2xl p-4">
+        <p class="text-sm text-gray-700 mb-3 leading-relaxed"><span class="text-blue-600 font-bold bg-blue-100 px-2 py-0.5 rounded-md mr-1">${i+1}</span> ${cr}</p>
+        <div class="flex flex-wrap gap-2">`;
+      for(let s=1;s<=5;s++) { 
+        const selected = val === s; 
+        html += `<button onclick="setTempScore('${key}',${s})" class="score-btn w-11 h-11 rounded-xl font-heading font-bold text-sm transition-all ${selected?'bg-gradient-to-br from-blue-500 to-purple-600 selected shadow-md':'bg-white border border-gray-200 hover:bg-gray-100 hover:border-gray-300 text-gray-600'}">${s}</button>`; 
+      }
+      html += `</div></div>`;
+    });
+    html += `</div>`;
+    html += `<div class="bg-blue-50 border border-blue-100 rounded-2xl p-5 mb-6"><div class="grid grid-cols-3 gap-3 text-center"><div><div class="text-2xl font-heading font-extrabold text-blue-600">${totalScore}/50</div><div class="text-sm text-gray-500">คะแนนที่ได้</div></div><div><div class="text-2xl font-heading font-extrabold text-purple-600">${pct.toFixed(1)}%</div><div class="text-sm text-gray-500">ร้อยละ</div></div><div><div class="text-2xl font-heading font-extrabold text-emerald-600">${avg10.toFixed(2)}</div><div class="text-sm text-gray-500">เฉลี่ย 10</div></div></div></div>`;
+    html += `<div class="flex gap-3"><button onclick="closeScoringModal()" class="flex-1 py-3.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition-all">ยกเลิก</button><button onclick="scoringStep=2;renderScoringStep()" class="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold transition-all shadow-md">ถัดไป →</button></div>`;
+  } else {
+    html += `<div class="mb-6"><label class="block text-sm font-bold text-gray-700 mb-2">ความคิดเห็นและข้อเสนอแนะผู้อำนวยการ/รองผู้อำนวยการ</label><textarea id="scoringComment" rows="6" class="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="พิมพ์ความคิดเห็นและข้อเสนอแนะที่นี่...">${esc(tempScores.comment)}</textarea></div>`;
+    html += `<div class="bg-blue-50 border border-blue-100 rounded-2xl p-5 mb-6"><div class="grid grid-cols-3 gap-3 text-center"><div><div class="text-2xl font-heading font-extrabold text-blue-600">${totalScore}/50</div><div class="text-sm text-gray-500">คะแนนที่ได้</div></div><div><div class="text-2xl font-heading font-extrabold text-purple-600">${pct.toFixed(1)}%</div><div class="text-sm text-gray-500">ร้อยละ</div></div><div><div class="text-2xl font-heading font-extrabold text-emerald-600">${avg10.toFixed(2)}</div><div class="text-sm text-gray-500">เฉลี่ย 10</div></div></div></div>`;
+    html += `<div class="flex gap-3"><button onclick="scoringStep=1;renderScoringStep()" class="flex-1 py-3.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition-all">← ย้อนกลับ</button><button id="saveScoreBtn" onclick="saveScoring()" class="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold transition-all shadow-md hover:shadow-lg hover:shadow-green-500/30">💾 บันทึกคะแนน</button></div>`;
+  }
+  c.innerHTML = html; lucide.createIcons();
+}
+
+function setTempScore(key, val) { tempScores[key] = val; renderScoringStep(); }
+
+async function saveScoring() {
+  const btn = document.getElementById('saveScoreBtn'); btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+  const commentEl = document.getElementById('scoringComment'); if(commentEl) tempScores.comment = commentEl.value;
+  let totalScore = 0; for(let i=1;i<=10;i++) totalScore += (tempScores['c'+i]||0);
+  const updated = {...currentScoringRecord};
+  for(let i=1;i<=10;i++) updated['c'+i] = tempScores['c'+i]||0;
+  updated.comment = tempScores.comment || ''; updated.score_obtained = totalScore; updated.score_total = 50; updated.score_percent = (totalScore/50)*100; updated.score_avg10 = updated.score_percent/10; updated.status = 'อนุมัติ';
+  
+  const res = await window.dataSdk.update(updated);
+  btn.disabled = false; btn.textContent = '💾 บันทึกคะแนน';
+  if(res.isOk) { closeScoringModal(); showToast('บันทึกคะแนนเรียบร้อย ✓'); } else { showToast('เกิดข้อผิดพลาด','linear-gradient(135deg,#ef4444,#dc2626)'); }
+}
+function exportPDF() { window.print(); }
+function esc(s) { if(!s) return ''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+lucide.createIcons();
+  </script>
+ </body>
+</html>
